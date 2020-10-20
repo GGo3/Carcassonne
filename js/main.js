@@ -16,19 +16,22 @@ const cards = {
     cardId: 0, 
     quality: 10,
     cardSrc: './images/corner.png',
+    degree: 0,
   }, 
     { 
     name: 'stick', 
     cardId: 1, 
     quality: 10,
     cardSrc: './images/stick.png',
+    degree: 0,
   }, 
     { 
     name: 'impasse', 
     cardId: 2, 
     quality: 10,
     cardSrc: './images/impasse.png',
-  }], 
+    degree: 0,
+  }],
 }
 
 // генерируем рандомный массив где длинна массива, это сумма всех карточек. В каждое значение массива ложим id карточки.
@@ -63,6 +66,15 @@ const genOneImgCard = () => {
 
 cardDeckEl.innerHTML = genOneImgCard();
 
+// Функция показывает значение сколько осталось карт в колоде.
+
+const cardsLeftEl = document.querySelector('.cards-left');
+
+const qualityCardsInDesk = () => {
+  cardsLeftEl.textContent = `Cards left: ${gameCards.length}`;
+}
+qualityCardsInDesk();
+
 // создание массива игрового поля
 
 let gameBoard = [];
@@ -89,10 +101,15 @@ const genBoardHTML = (arrBoard) => {
     for (let k = 0; k < arrBoard[i].length; k++) {
       if (arrBoard[i][k] != null) {
         spaceStr = `${spaceStr}
-          <div class="board-space" id="${(i * arrBoard.length) + (k)}">
+          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}">
             <img class="card-img" src="${arrBoard[i][k].cardSrc}">
           </div>`;
-      } else {
+      } else if (arrBoard[i][k] != null && arrBoard[i][k].degree != 0) {
+        spaceStr = `${spaceStr}
+          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}" style="transform: rotate(${arrBoard[i][k].degree});">
+            <img class="card-img" src="${arrBoard[i][k].cardSrc}">
+          </div>`;
+      } else  {
         spaceStr = `${spaceStr}<div class="board-space" id="${(i * arrBoard.length) + (k)}"></div>`;
       }
       
@@ -116,16 +133,36 @@ const writeImgInArr = (chosenSpace, space) => {
 
 // функция установки карточки на доску.
 
-const gameSpaceEl = document.querySelectorAll('.board-space');
+let gameSpaceEl = document.querySelectorAll('.board-space');
+let degreeCard = 0;
 
 const setCardOnBoard = (event) => {
   let selectGameCard = gameCards.pop(); // переменная в которую присваиваеться удаленный элемент массива с карточками.
   cardDeckEl.innerHTML = genOneImgCard(); // заново рисуеться последний элемент.
   writeImgInArr(event.target.id, selectGameCard); // тут функция для внесения объекта карточки которая отображена в колоде в массив игровой доски.
   genBoardHTML(gameBoard); // заново рисуем доску
+  qualityCardsInDesk(); // сколько осталось карт
+  gameSpaceEl = document.querySelectorAll('.board-space');
+  for (let i = 0; i < gameSpaceEl.length; i++) {
+    if (gameSpaceEl[i].classList.length > 1) {
+      gameSpaceEl[i].addEventListener('click', rotateGameCard);
+    } else {
+      gameSpaceEl[i].addEventListener('click', setCardOnBoard);
+    };
+  };
+};
+
+const rotateGameCard = (event) => {
+  degreeCard += 90;
+  event.target.style.transform = `rotate(${degreeCard}deg)`;
+  event.target.degree = degreeCard;
   
 };
+
 
 for (let i = 0; i < gameSpaceEl.length; i++) {
   gameSpaceEl[i].addEventListener('click', setCardOnBoard);
 };
+console.log(gameSpaceEl);
+
+
