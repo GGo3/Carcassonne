@@ -1,0 +1,33 @@
+html{
+	box-sizing: border-box;
+}
+*, *::before, *::after{
+	box-sizing: inherit;
+}
+.main {
+  position: relative;
+  width: 1000px;
+  height: 600px;
+}
+.card-deck {
+  position: relative;
+  margin: 10px 0 0 10px ;
+}
+.card-img{
+  position: absolute;
+}
+.board-desk{
+  position: absolute;
+  left: 20%;
+  top: 20%;
+  display: flex;
+  flex-wrap: wrap;
+  width: 512px;
+}
+.board-space {
+  padding: 0;
+  width: 64px;
+  height: 64px;
+  border: 1px solid black;
+  align-items: center;
+}
