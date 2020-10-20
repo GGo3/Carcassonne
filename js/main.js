@@ -95,7 +95,6 @@ for (let i = 0; i < boardRows; i++) {
 const gameBoardEl = document.querySelector('.board-desk');
 
 const genBoardHTML = (arrBoard) => {
-  console.log(arrBoard);
   let spaceStr = '';
   for (let i = 0; i < arrBoard.length; i++) {
     for (let k = 0; k < arrBoard[i].length; k++) {
@@ -152,17 +151,24 @@ const setCardOnBoard = (event) => {
   };
 };
 
-const rotateGameCard = (event) => {
+const rotateGameCard = (el) => {
   degreeCard += 90;
-  event.target.style.transform = `rotate(${degreeCard}deg)`;
-  event.target.degree = degreeCard;
-  
+  el.target.style.transform = `rotate(${degreeCard}deg)`;
+  // console.dir(el.target.parentNode.id);
+  writeDegreeInArr(el.target.parentNode.id, degreeCard);
+};
+const writeDegreeInArr = (chosenSpace, value) => {
+  let rowNumber2 = 0;
+  let columnsNumber2 = 0;
+  columnsNumber2 = chosenSpace % boardColumns;
+  rowNumber2 = (chosenSpace - columnsNumber2) / boardRows;
+  gameBoard[rowNumber2][columnsNumber2].degree = value;
 };
 
 
 for (let i = 0; i < gameSpaceEl.length; i++) {
   gameSpaceEl[i].addEventListener('click', setCardOnBoard);
 };
-console.log(gameSpaceEl);
+
 
 
