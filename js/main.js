@@ -100,13 +100,8 @@ const genBoardHTML = (arrBoard) => {
     for (let k = 0; k < arrBoard[i].length; k++) {
       if (arrBoard[i][k] != null) {
         spaceStr = `${spaceStr}
-          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}">
-            <img class="card-img" src="${arrBoard[i][k].cardSrc}">
-          </div>`;
-      } else if (arrBoard[i][k] != null && arrBoard[i][k].degree != 0) {
-        spaceStr = `${spaceStr}
-          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}" style="transform: rotate(${arrBoard[i][k].degree});">
-            <img class="card-img" src="${arrBoard[i][k].cardSrc}">
+          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}" >
+            <img class="card-img" src="${arrBoard[i][k].cardSrc}" style="transform: rotate(${arrBoard[i][k].degree}deg);">
           </div>`;
       } else  {
         spaceStr = `${spaceStr}<div class="board-space" id="${(i * arrBoard.length) + (k)}"></div>`;
@@ -133,10 +128,11 @@ const writeImgInArr = (chosenSpace, space) => {
 // функция установки карточки на доску.
 
 let gameSpaceEl = document.querySelectorAll('.board-space');
-let degreeCard = 0;
+
 
 const setCardOnBoard = (event) => {
-  let selectGameCard = gameCards.pop(); // переменная в которую присваиваеться удаленный элемент массива с карточками.
+  let takeGameCard = gameCards.pop(); // переменная в которую присваиваеться удаленный элемент массива с карточками.
+  let selectGameCard = Object.assign({}, takeGameCard); // копируем объект и ложим в переменную.
   cardDeckEl.innerHTML = genOneImgCard(); // заново рисуеться последний элемент.
   writeImgInArr(event.target.id, selectGameCard); // тут функция для внесения объекта карточки которая отображена в колоде в массив игровой доски.
   genBoardHTML(gameBoard); // заново рисуем доску
@@ -151,24 +147,36 @@ const setCardOnBoard = (event) => {
   };
 };
 
+for (let i = 0; i < gameSpaceEl.length; i++) {
+  gameSpaceEl[i].addEventListener('click', setCardOnBoard);
+};
+
+// функция поворота карты
+
 const rotateGameCard = (el) => {
+  let degreeCard = getObjProperty(el.target.parentNode.id);
   degreeCard += 90;
   el.target.style.transform = `rotate(${degreeCard}deg)`;
-  // console.dir(el.target.parentNode.id);
   writeDegreeInArr(el.target.parentNode.id, degreeCard);
+  
 };
+
+// функция для записи значения граудса повернутой карты в базу данных
+
 const writeDegreeInArr = (chosenSpace, value) => {
   let rowNumber2 = 0;
   let columnsNumber2 = 0;
   columnsNumber2 = chosenSpace % boardColumns;
   rowNumber2 = (chosenSpace - columnsNumber2) / boardRows;
-  gameBoard[rowNumber2][columnsNumber2].degree = value;
+  gameBoard[rowNumber2][columnsNumber2].degree = value; 
 };
 
+// функция получения текущего значения градуса поворота карты с базы данных
 
-for (let i = 0; i < gameSpaceEl.length; i++) {
-  gameSpaceEl[i].addEventListener('click', setCardOnBoard);
-};
-
-
-
+const getObjProperty = (spaceId) => {
+  let rowNumberArr = 0;
+  let columnsNumberArr = 0;
+  columnsNumberArr = spaceId % boardColumns;
+  rowNumberArr = (spaceId - columnsNumberArr) / boardRows;
+  return  gameBoard[rowNumberArr][columnsNumberArr].degree; 
+}
