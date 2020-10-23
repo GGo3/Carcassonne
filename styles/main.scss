@@ -41,3 +41,10 @@ html{
   border: 1px solid black;
   align-items: center;
 }
+
+.incorrect {
+  border: 3px solid red;
+  width: 60px;
+  height: 60px;
+  box-sizing: content-box;
+}

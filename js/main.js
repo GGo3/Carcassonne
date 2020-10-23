@@ -17,6 +17,8 @@ const cards = {
     quality: 10,
     cardSrc: './images/corner.png',
     degree: 0,
+    rouds: [false, true, true, false],
+    pos: true,
   }, 
     { 
     name: 'stick', 
@@ -24,6 +26,8 @@ const cards = {
     quality: 10,
     cardSrc: './images/stick.png',
     degree: 0,
+    rouds: [false, true, false, true],
+    pos: true,
   }, 
     { 
     name: 'impasse', 
@@ -31,6 +35,8 @@ const cards = {
     quality: 10,
     cardSrc: './images/impasse.png',
     degree: 0,
+    rouds: [false, true, false, false],
+    pos: true,
   }],
 }
 
@@ -94,11 +100,16 @@ for (let i = 0; i < boardRows; i++) {
 
 const gameBoardEl = document.querySelector('.board-desk');
 
-const genBoardHTML = (arrBoard) => {
+const genBoardHTML = (arrBoard, check) => {
   let spaceStr = '';
   for (let i = 0; i < arrBoard.length; i++) {
     for (let k = 0; k < arrBoard[i].length; k++) {
-      if (arrBoard[i][k] != null) {
+      if (arrBoard[i][k] != null && arrBoard[i][k].pos == false) {
+        spaceStr = `${spaceStr}
+          <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}" >
+            <img class="card-img incorrect" src="${arrBoard[i][k].cardSrc}" style="transform: rotate(${arrBoard[i][k].degree}deg);">
+          </div>`;
+      } else if (arrBoard[i][k] != null) {
         spaceStr = `${spaceStr}
           <div class="board-space with-img" id="${(i * arrBoard.length) + (k)}" >
             <img class="card-img" src="${arrBoard[i][k].cardSrc}" style="transform: rotate(${arrBoard[i][k].degree}deg);">
@@ -135,9 +146,21 @@ const setCardOnBoard = (event) => {
   let selectGameCard = Object.assign({}, takeGameCard); // копируем объект и ложим в переменную.
   cardDeckEl.innerHTML = genOneImgCard(); // заново рисуеться последний элемент.
   writeImgInArr(event.target.id, selectGameCard); // тут функция для внесения объекта карточки которая отображена в колоде в массив игровой доски.
+  if (checkPosBlock(event.target.id)) {
+    getObjProperty(event.target.id).pos = true;
+  } else {
+    getObjProperty(event.target.id).pos = false;
+  }
   genBoardHTML(gameBoard); // заново рисуем доску
   qualityCardsInDesk(); // сколько осталось карт
+  // if (checkPosBlock(event.target.id) == false) {
+  //   event.target.classList.add('incorrect');
+  // } else {
+  //   event.target.classList.remove('incorrect');
+  // }
+
   gameSpaceEl = document.querySelectorAll('.board-space');
+  
   for (let i = 0; i < gameSpaceEl.length; i++) {
     if (gameSpaceEl[i].classList.length > 1) {
       gameSpaceEl[i].addEventListener('click', rotateGameCard);
@@ -145,6 +168,8 @@ const setCardOnBoard = (event) => {
       gameSpaceEl[i].addEventListener('click', setCardOnBoard);
     };
   };
+  
+  
 };
 
 for (let i = 0; i < gameSpaceEl.length; i++) {
@@ -154,29 +179,103 @@ for (let i = 0; i < gameSpaceEl.length; i++) {
 // функция поворота карты
 
 const rotateGameCard = (el) => {
-  let degreeCard = getObjProperty(el.target.parentNode.id);
-  degreeCard += 90;
-  el.target.style.transform = `rotate(${degreeCard}deg)`;
-  writeDegreeInArr(el.target.parentNode.id, degreeCard);
-  
+  let degreeCard = getObjProperty(el.target.parentNode.id); // получаю ссылку на объект элемента
+  degreeCard.rouds = shiftRoudsArr(degreeCard); // при повороте на 90 грудусо происходит сдвиг массива вправо и перезаписывается значение в БД
+  degreeCard.degree += 90;
+  console.log('rot', checkPosBlock(el.target.parentNode.id));
+  el.target.style.transform = `rotate(${degreeCard.degree}deg)`; // вузуализация поворота на 90 градусов
+  if (checkPosBlock(el.target.parentNode.id) == false) {
+    el.target.classList.add('incorrect');
+    getObjProperty(el.target.parentNode.id).pos = false;
+  } else {
+    el.target.classList.remove('incorrect');
+    getObjProperty(el.target.parentNode.id).pos = true;
+  }
 };
 
-// функция для записи значения граудса повернутой карты в базу данных
-
-const writeDegreeInArr = (chosenSpace, value) => {
-  let rowNumber2 = 0;
-  let columnsNumber2 = 0;
-  columnsNumber2 = chosenSpace % boardColumns;
-  rowNumber2 = (chosenSpace - columnsNumber2) / boardRows;
-  gameBoard[rowNumber2][columnsNumber2].degree = value; 
-};
-
-// функция получения текущего значения градуса поворота карты с базы данных
+// функция получения объекта с массива доски для последующих манипуляций с ним.
 
 const getObjProperty = (spaceId) => {
   let rowNumberArr = 0;
   let columnsNumberArr = 0;
   columnsNumberArr = spaceId % boardColumns;
   rowNumberArr = (spaceId - columnsNumberArr) / boardRows;
-  return  gameBoard[rowNumberArr][columnsNumberArr].degree; 
-}
+  return  gameBoard[rowNumberArr][columnsNumberArr]; 
+};
+
+// функция сдвига массива позици вправо.
+const shiftRoudsArr = (objArr) => {
+  let tempArr = objArr.rouds;
+  let newArr = tempArr.slice(3).concat(tempArr.slice(0,3));
+  return newArr;
+};
+
+// функция проверки правльности постановки карточки, она будет выдавать конечный результат true или false
+
+const checkPosBlock = (currentId) => {
+  let rowNumberCurrent = 0;
+  let columnsNumberCurrent = 0;
+  columnsNumberCurrent = currentId % boardColumns;
+  rowNumberCurrent  = (currentId - columnsNumberCurrent) / boardRows;
+
+  const checkLeftBlock = () => {
+    if ((columnsNumberCurrent + 1) < boardColumns) {
+      if (gameBoard[rowNumberCurrent][columnsNumberCurrent + 1] !== null && gameBoard[rowNumberCurrent][columnsNumberCurrent + 1].rouds[3] == gameBoard[rowNumberCurrent][columnsNumberCurrent].rouds[1] || gameBoard[rowNumberCurrent][columnsNumberCurrent + 1]  == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    };
+  }
+  
+
+  const checkRightBlock = () => {
+    if ((columnsNumberCurrent - 1) >= 0) {
+      if (gameBoard[rowNumberCurrent][columnsNumberCurrent - 1] !== null && gameBoard[rowNumberCurrent][columnsNumberCurrent - 1].rouds[1] == gameBoard[rowNumberCurrent][columnsNumberCurrent].rouds[3] || gameBoard[rowNumberCurrent][columnsNumberCurrent - 1] == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    };
+  }
+  
+  
+  const checkBottomBlock = () => {
+    if ((rowNumberCurrent + 1) < boardRows) {
+      if (gameBoard[rowNumberCurrent + 1][columnsNumberCurrent] !== null && gameBoard[rowNumberCurrent + 1][columnsNumberCurrent].rouds[0] == gameBoard[rowNumberCurrent][columnsNumberCurrent].rouds[2] || gameBoard[rowNumberCurrent + 1][columnsNumberCurrent] == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    };
+  }
+  
+  
+  const checkTopBlock = () => {
+    if ((rowNumberCurrent - 1) >= 0) {
+      if (gameBoard[rowNumberCurrent - 1][columnsNumberCurrent] !== null && gameBoard[rowNumberCurrent - 1][columnsNumberCurrent].rouds[2] == gameBoard[rowNumberCurrent][columnsNumberCurrent].rouds[0] || gameBoard[rowNumberCurrent - 1][columnsNumberCurrent] == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    };
+  }
+  
+  if (checkLeftBlock() && checkRightBlock() && checkBottomBlock() && checkTopBlock()) {
+    return true;
+  } else {
+    return false;
+  }
+  
+};
+
+
+
